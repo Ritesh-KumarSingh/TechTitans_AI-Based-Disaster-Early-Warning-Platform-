@@ -19,7 +19,7 @@ Team Members:
 Sandhya Kumari
 Research & Data Analyst
 
-Shubham Srivastava
+Shubham Srivastava: Domain Specialist (Disaster management workflows)
 
 Mohd. Bilal
 
