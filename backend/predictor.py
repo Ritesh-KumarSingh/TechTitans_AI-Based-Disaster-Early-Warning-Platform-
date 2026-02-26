@@ -10,23 +10,33 @@ import os
 from datetime import datetime
 
 
-def load_model():
-    """Load trained ML model and scaler"""
+def load_models():
+    """Load trained ML models and scalers for all disasters"""
     model_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'ml_model', 'saved_models')
 
-    model_file = os.path.join(model_path, 'flood_model.pkl')
-    scaler_file = os.path.join(model_path, 'scaler.pkl')
+    models = {}
+    scalers = {}
 
-    if not os.path.exists(model_file) or not os.path.exists(scaler_file):
-        return None, None
+    # Define paths
+    paths = {
+        'flood': ('flood_model.pkl', 'scaler.pkl'),
+        'cyclone': ('cyclone_model.pkl', 'cyclone_scaler.pkl'),
+        'heatwave': ('heatwave_model.pkl', 'heatwave_scaler.pkl')
+    }
 
-    model = joblib.load(model_file)
-    scaler = joblib.load(scaler_file)
-    return model, scaler
+    for disaster, (m_file, s_file) in paths.items():
+        m_path = os.path.join(model_path, m_file)
+        s_path = os.path.join(model_path, s_file)
+        
+        if os.path.exists(m_path) and os.path.exists(s_path):
+            models[disaster] = joblib.load(m_path)
+            scalers[disaster] = joblib.load(s_path)
+    
+    return models, scalers
 
 
-def transform_to_features(weather_data):
-    """Transform weather API data to 10 ML model features"""
+def transform_to_features_flood(weather_data):
+    """Transform weather API data to 10 ML model features for Flood"""
 
     # Estimate 24h rainfall from 1h data
     rainfall_1h = weather_data['rainfall_1h']
@@ -71,15 +81,91 @@ def transform_to_features(weather_data):
         'land_use_index': round(land_use_index, 2)
     }
 
+def transform_to_features_cyclone(weather_data):
+    """Transform weather API data to ML model features for Cyclone"""
+    
+    wind_speed = weather_data['wind_speed'] * 1.5 # Gust estimate
+    pressure = weather_data['pressure']
+    
+    # Estimate rainfall
+    rainfall = weather_data['rainfall_1h'] * np.random.uniform(8, 15)
+    if rainfall < 1 and pressure < 1000:
+        rainfall = np.random.uniform(10, 80)
+        
+    distance_to_coast = np.random.uniform(10, 200) # Assuming coastal proxy
+    system_movement_speed = np.random.uniform(10, 25)
+    
+    sea_surface_temp = weather_data['temperature'] + np.random.uniform(-2, 2)
+    ocean_heat_content = np.random.uniform(30, 90)
+    
+    elevation = np.random.uniform(5, 50) # Mostly coastal
+    
+    return {
+        'wind_speed': round(wind_speed, 2),
+        'pressure': round(pressure, 2),
+        'sea_surface_temp': round(sea_surface_temp, 2),
+        'rainfall': round(rainfall, 2),
+        'distance_to_coast': round(distance_to_coast, 2),
+        'system_movement_speed': round(system_movement_speed, 2),
+        'humidity': round(weather_data['humidity'], 2),
+        'ocean_heat_content': round(ocean_heat_content, 2),
+        'month': datetime.now().month,
+        'elevation': round(elevation, 2)
+    }
 
-def predict_flood_risk(features, model, scaler, translations, lang='en'):
-    """Predict flood risk level using trained ML model"""
+def transform_to_features_heatwave(weather_data):
+    """Transform weather API data to ML model features for Heatwave"""
+    
+    max_temp = weather_data['temperature'] + np.random.uniform(0, 4)
+    humidity = weather_data['humidity']
+    
+    heat_index = max_temp
+    if max_temp >= 27 and humidity >= 40:
+        heat_index = max_temp + (humidity - 40) * 0.1
+        
+    consecutive_hot_days = 0
+    if max_temp > 35:
+        consecutive_hot_days = np.random.randint(1, 5)
+        
+    soil_moisture = np.random.uniform(10, 40) # Assume drier during heatwave
+    cloud_cover = weather_data.get('cloud_cover', np.random.uniform(0, 30))
+    urban_heat_island_idx = np.random.uniform(5, 10)
+    
+    historical_avg_temp = 30 # Rough Indian summer avg
+    temp_anomaly = max_temp - historical_avg_temp
+    
+    return {
+        'max_temperature': round(max_temp, 2),
+        'heat_index': round(heat_index, 2),
+        'humidity': round(humidity, 2),
+        'consecutive_hot_days': consecutive_hot_days,
+        'wind_speed': round(weather_data['wind_speed'], 2),
+        'soil_moisture': round(soil_moisture, 2),
+        'month': datetime.now().month,
+        'cloud_cover': round(cloud_cover, 2),
+        'urban_heat_island_idx': round(urban_heat_island_idx, 2),
+        'temp_anomaly': round(temp_anomaly, 2)
+    }
+
+
+def predict_risk(features, model, scaler, disaster_type, translations, lang='en'):
+    """Predict risk level using trained ML model"""
 
     # Ensure correct column order matching training data
-    feature_names = ['rainfall', 'river_level', 'humidity', 'month', 'wind_speed',
+    feature_names = {
+        'flood': ['rainfall', 'river_level', 'humidity', 'month', 'wind_speed',
                      'temperature', 'soil_moisture', 'elevation', 'drainage_density',
-                     'land_use_index']
-    features_df = pd.DataFrame([features])[feature_names]
+                     'land_use_index'],
+        'cyclone': ['wind_speed', 'pressure', 'sea_surface_temp', 'rainfall',
+                    'distance_to_coast', 'system_movement_speed', 'humidity',
+                    'ocean_heat_content', 'month', 'elevation'],
+        'heatwave': ['max_temperature', 'heat_index', 'humidity', 'consecutive_hot_days',
+                     'wind_speed', 'soil_moisture', 'month', 'cloud_cover',
+                     'urban_heat_island_idx', 'temp_anomaly']
+    }
+    
+    cols = feature_names[disaster_type]
+    features_df = pd.DataFrame([features])[cols]
 
     features_scaled = scaler.transform(features_df)
 

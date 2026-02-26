@@ -30,6 +30,7 @@ def get_weather_data(city, api_key):
             'pressure': data['main']['pressure'],
             'wind_speed': data['wind']['speed'] * 3.6,  # m/s to km/h
             'rainfall_1h': data.get('rain', {}).get('1h', 0),
+            'cloud_cover': data.get('clouds', {}).get('all', 0),
             'description': data['weather'][0]['description'],
             'icon': data['weather'][0]['icon']
         }

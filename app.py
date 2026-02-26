@@ -21,9 +21,11 @@ from frontend.translations import TRANSLATIONS, t
 from frontend.charts import create_risk_gauge, create_prob_chart
 from backend.weather_api import get_weather_data
 from backend.predictor import (
-    load_model as _load_model,
-    transform_to_features,
-    predict_flood_risk,
+    load_models as _load_models,
+    transform_to_features_flood,
+    transform_to_features_cyclone,
+    transform_to_features_heatwave,
+    predict_risk,
     EMERGENCY_RESOURCES,
 )
 
@@ -49,21 +51,15 @@ apply_styles()
 # ============================================================================
 
 @st.cache_resource
-def load_model():
-    """Load trained ML model and scaler"""
-    model_path = os.path.join(os.path.dirname(__file__), 'ml_model', 'saved_models')
-
-    model_file = os.path.join(model_path, 'flood_model.pkl')
-    scaler_file = os.path.join(model_path, 'scaler.pkl')
-
-    if not os.path.exists(model_file) or not os.path.exists(scaler_file):
-        st.error("❌ Model files not found! Run `python ml_model/trainer.py` first.")
+def load_all_models_v2():
+    """Load all trained ML models and scalers"""
+    models, scalers = _load_models()
+    
+    if 'flood' not in models or 'cyclone' not in models or 'heatwave' not in models:
+        st.error("❌ Not all model files found! Run the trainer scripts in ml_model/ first.")
         st.stop()
-
-    import joblib
-    model = joblib.load(model_file)
-    scaler = joblib.load(scaler_file)
-    return model, scaler
+        
+    return models, scalers
 
 
 # ============================================================================
@@ -104,8 +100,8 @@ def main():
         """, unsafe_allow_html=True)
         st.stop()
 
-    # Load model
-    model, scaler = load_model()
+    # Load models
+    models, scalers = load_all_models_v2()
 
     # ── Search Section ──
     st.markdown(f"""
@@ -122,6 +118,13 @@ def main():
         city = st.text_input(
             "City",
             placeholder=t('search_placeholder', lang),
+            label_visibility="collapsed"
+        )
+        
+        disaster_type = st.selectbox(
+            label="Disaster Type",
+            options=['flood', 'cyclone', 'heatwave'],
+            format_func=lambda x: t(f'disaster_{x}', lang),
             label_visibility="collapsed"
         )
 
@@ -142,8 +145,21 @@ def main():
                 </div>
                 """, unsafe_allow_html=True)
             else:
-                features = transform_to_features(weather)
-                prediction = predict_flood_risk(features, model, scaler, TRANSLATIONS, lang)
+                if disaster_type == 'flood':
+                    features = transform_to_features_flood(weather)
+                elif disaster_type == 'cyclone':
+                    features = transform_to_features_cyclone(weather)
+                else:
+                    features = transform_to_features_heatwave(weather)
+                    
+                prediction = predict_risk(
+                    features, 
+                    models[disaster_type], 
+                    scalers[disaster_type], 
+                    disaster_type,
+                    TRANSLATIONS, 
+                    lang
+                )
 
                 # ── Risk Result Card ──
                 st.markdown(f"""
@@ -278,7 +294,8 @@ def main():
                 """, unsafe_allow_html=True)
 
                 # ── ML Features (expandable) ──
-                with st.expander(t('ai_details', lang)):
+                # Add extra wide spacing to prevent overlap with the expander arrow
+                with st.expander(f"   {t('ai_details', lang)}   "):
                     st.markdown(f'<p style="color: rgba(255,255,255,0.7);">{t("features_used", lang)}</p>', unsafe_allow_html=True)
 
                     feature_df = pd.DataFrame([features]).T
