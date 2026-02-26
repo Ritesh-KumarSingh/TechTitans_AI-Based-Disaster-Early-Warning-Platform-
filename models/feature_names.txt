@@ -1,0 +1,10 @@
+rainfall
+river_level
+humidity
+month
+wind_speed
+temperature
+soil_moisture
+elevation
+drainage_density
+land_use_index
