@@ -22,6 +22,9 @@ Shubham Srivastava
 
 Mohd. Bilal
 
+Domain Specialist (Disaster management workflows)
+
+
 📌 Project Overview
 
 The AI-Based Disaster Prediction System is designed to predict potential natural disasters using artificial intelligence and data-driven insights. The platform analyzes environmental and historical data such as weather patterns, seismic activity, and geographical conditions to identify early warning signs and provide timely alerts.
