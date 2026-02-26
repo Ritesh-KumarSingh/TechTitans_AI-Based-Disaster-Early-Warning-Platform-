@@ -17,13 +17,16 @@ Backend Integration)
 Team Members:
 
 Sandhya Kumari
-Research & Data Analyst
 
-Shubham Srivastava: Domain Specialist (Disaster management workflows)
+(Research & Data Analyst)
+
+Shubham Srivastava 
+
+(Domain Specialist (Disaster management workflows))
 
 Mohd. Bilal
 
-Domain Specialist (Disaster management workflows)
+(Domain Specialist -Disaster management workflows)
 
 
 📌 Project Overview
@@ -31,3 +34,9 @@ Domain Specialist (Disaster management workflows)
 The AI-Based Disaster Prediction System is designed to predict potential natural disasters using artificial intelligence and data-driven insights. The platform analyzes environmental and historical data such as weather patterns, seismic activity, and geographical conditions to identify early warning signs and provide timely alerts.
 
 Our goal is to support disaster preparedness, minimize damage, and help authorities and communities take preventive action before disasters occur.
+
+
+
+
+
+# successfully deployed on- https://techtitans1.streamlit.app/
