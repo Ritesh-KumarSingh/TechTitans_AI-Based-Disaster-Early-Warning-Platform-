@@ -17,6 +17,7 @@ Backend Integration)
 Team Members:
 
 Sandhya Kumari
+Research & Data Analyst
 
 Shubham Srivastava
 
