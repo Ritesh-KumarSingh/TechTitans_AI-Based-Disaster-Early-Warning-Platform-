@@ -10,10 +10,16 @@ Team Lead:
 
 Ritesh Kumar Singh
 
+(Team Lead,
+AI/ML Developer,
+Backend Integration)
+
 Team Members:
 
 Sandhya Kumari
+
 Shubham Srivastava
+
 Mohd. Bilal
 
 📌 Project Overview
